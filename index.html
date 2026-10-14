@@ -154,6 +154,95 @@ h1 {
     gap: 10px;
 }
 
+.controles-tabela {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+#buscaTabela,
+.dropdown-situacao summary {
+    min-height: 42px;
+    padding: 10px 13px;
+    color: var(--texto);
+    background: #fff;
+    border: 1px solid var(--linha);
+    border-radius: 9px;
+    font: inherit;
+}
+
+#buscaTabela {
+    flex: 1;
+    min-width: 180px;
+}
+
+.dropdown-situacao {
+    position: relative;
+    min-width: 220px;
+}
+
+.dropdown-situacao summary {
+    display: block;
+    cursor: pointer;
+    list-style: none;
+}
+
+.dropdown-situacao summary::-webkit-details-marker {
+    display: none;
+}
+
+.dropdown-situacao summary::after {
+    content: " ▾";
+    float: right;
+    color: var(--suave);
+}
+
+.botao-situacao {
+    width: 100%;
+    margin-bottom: 6px;
+    padding: 8px 10px;
+    color: var(--azul-acao);
+    background: #f5f8fa;
+    border: 1px solid var(--linha);
+    border-radius: 7px;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.dropdown-opcoes {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 5;
+    width: min(320px, calc(100vw - 48px));
+    max-height: 260px;
+    overflow-y: auto;
+    padding: 8px;
+    background: #fff;
+    border: 1px solid var(--linha);
+    border-radius: 10px;
+    box-shadow: var(--sombra);
+}
+
+.filtro-situacao {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px;
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+.filtro-situacao:hover {
+    background: #f0f7ff;
+}
+
+.filtro-situacao input {
+    accent-color: var(--azul-acao);
+}
+
 .filtro-logger {
     display: inline-flex;
     align-items: center;
@@ -208,7 +297,7 @@ table {
 th,
 td {
     padding: 10px 8px;
-    text-align: right;
+    text-align: center;
     border-bottom: 1px solid var(--linha);
     white-space: normal;
     overflow-wrap: anywhere;
@@ -285,6 +374,16 @@ th.ordenada.desc::after {
         padding: 18px;
     }
 
+    .controles-tabela {
+        flex-direction: column;
+    }
+
+    #buscaTabela,
+    .dropdown-situacao {
+        width: 100%;
+        min-width: 0;
+    }
+
     td:first-child {
         width: 120px;
     }
@@ -297,7 +396,7 @@ th.ordenada.desc::after {
     <header class="topo">
         <h1>Status dos Dataloggers</h1>
         <div class="atualizacao">
-            Última atualização: 09/10/2026 às 12:24
+            Última atualização: 14/10/2026 às 17:11
         </div>
     </header>
 
@@ -325,12 +424,29 @@ th.ordenada.desc::after {
         </button>
 
         <div class="lista-filtros" id="filtrosLogger"></div>
+        <div class="controles-tabela">
+            <input
+                type="search"
+                id="buscaTabela"
+                placeholder="Pesquisar na tabela..."
+                aria-label="Pesquisar na tabela"
+            >
+            <details class="dropdown-situacao">
+                <summary>Filtrar por situação</summary>
+                <div class="dropdown-opcoes">
+                    <button type="button" id="alternarSituacoes" class="botao-situacao">
+                        Desmarcar todas
+                    </button>
+                    <div id="filtrosSituacao"></div>
+                </div>
+            </details>
+        </div>
     </section>
 
     <div class="conteudo-principal">
         <section class="painel">
             <div class="tabela-scroll">
-                <table>
+                <table id="tabelaDados">
                     <thead>
                         <tr id="cabecalho"></tr>
                     </thead>
@@ -343,9 +459,9 @@ th.ordenada.desc::after {
 </main>
 
 <script>
-const COLUNAS = ["SITUAÇÃO", "ARES", "SHIELD", "ARES COM SONDA", "SYOS", "SENSOR VTC", "ELITECH", "Resumo.1", "Total"];
-const DADOS = [{"valores": ["EM DESLOCAMENTO", 3875.0, 7.0, 25.0, 115.0, 14.0, 8.0, "Em estoque", 4044.0], "total": 4044.0}, {"valores": ["FORA DE OPERAÇÃO", 3653.0, 548.0, 664.0, 0.0, 132.0, 0.0, "Estoque para Manutenção", 4997.0], "total": 4997.0}, {"valores": ["Indefinido", 7.0, 0.0, 0.0, 0.0, 0.0, 0.0, "Emprestimo", 7.0], "total": 7.0}, {"valores": ["AGENTE", 1057.0, 0.0, 11.0, 0.0, 18.0, 34.0, "Enviado para Calibração", 1120.0], "total": 1120.0}, {"valores": ["EM ESTOQUE", 1017.0, 54.0, 37.0, 1543.0, 103.0, 173.0, "Recebido pela CF", 2927.0], "total": 2927.0}, {"valores": ["ENVIADO PARA CALIBRAÇÃO", 415.0, 0.0, 0.0, 0.0, 0.0, 0.0, "Enviado para Manutenção", 415.0], "total": 415.0}, {"valores": ["RETORNANDO PARA BASE", 505.0, 0.0, 1.0, 2.0, 0.0, 1.0, "Movimentado para CF", 509.0], "total": 509.0}, {"valores": ["EM ESTOQUE PARA MANUTENÇÃO - ARES", 166.0, 0.0, 46.0, 0.0, 27.0, 0.0, "Estoque para Calibração", 239.0], "total": 239.0}, {"valores": ["FIXOS - VEÍCULOS", 278.0, 0.0, 0.0, 2.0, 0.0, 2.0, null, 282.0], "total": 282.0}, {"valores": ["ENVIADO PARA MANUTENÇÃO - ARES", 425.0, 0.0, 137.0, 0.0, 0.0, 0.0, null, 562.0], "total": 562.0}, {"valores": ["ADM - CAMARA FRIA", 794.0, 2.0, 1.0, 1.0, 0.0, 0.0, null, 798.0], "total": 798.0}, {"valores": ["TESTE QUALIDADE", 65.0, 8.0, 0.0, 2.0, 0.0, 0.0, null, 75.0], "total": 75.0}, {"valores": ["PACKING - CÂMARA FRIA", 104.0, 0.0, 3.0, 1.0, 0.0, 0.0, null, 108.0], "total": 108.0}, {"valores": ["QUALIFICAÇÃO DE AREA - CF", 124.0, 0.0, 0.0, 0.0, 0.0, 0.0, null, 124.0], "total": 124.0}, {"valores": ["MONITORAMENTO DE AREA - CF", 35.0, 0.0, 0.0, 29.0, 0.0, 0.0, null, 64.0], "total": 64.0}, {"valores": ["MONITORAMENTO DE AREA - CD", 31.0, 0.0, 0.0, 0.0, 0.0, 0.0, null, 31.0], "total": 31.0}, {"valores": ["EM ESTOQUE PARA CALIBRAR", 84.0, 0.0, 0.0, 0.0, 0.0, 0.0, null, 84.0], "total": 84.0}, {"valores": ["SEPARADO PARA DEMANDA", 21.0, 0.0, 0.0, 0.0, 0.0, 0.0, null, 21.0], "total": 21.0}, {"valores": ["MONITORAMENTO DE AREA - QM", 10.0, 0.0, 0.0, 6.0, 0.0, 0.0, null, 16.0], "total": 16.0}, {"valores": ["QUALIFICAÇÃO DE VEICULOS", 9.0, 0.0, 0.0, 0.0, 0.0, 0.0, null, 9.0], "total": 9.0}, {"valores": ["NÃO LOCALIZADO", 8.0, 0.0, 0.0, 0.0, 0.0, 0.0, null, 8.0], "total": 8.0}, {"valores": ["EM ROTA - TRASNPORTE", 5.0, 0.0, 0.0, 0.0, 0.0, 0.0, null, 5.0], "total": 5.0}, {"valores": ["ESTOQUE - GIG", 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, null, 3.0], "total": 3.0}, {"valores": ["MOVIMENTADO PARA BSB", 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, null, 1.0], "total": 1.0}, {"valores": ["DEVOLUÇÃO DE SHIELD", 0.0, 127.0, 0.0, 0.0, 0.0, 0.0, null, 127.0], "total": 127.0}, {"valores": ["EM ESTOQUE PARA MANUTENÇÃO - SENSOR", 0.0, 0.0, 0.0, 0.0, 475.0, 0.0, null, 475.0], "total": 475.0}, {"valores": ["EM ESTOQUE PARA MANUTENÇÃO - SHIELD", 0.0, 173.0, 0.0, 0.0, 0.0, 0.0, null, 173.0], "total": 173.0}, {"valores": ["ENVIADO PARA - REC", 0.0, 0.0, 0.0, 67.0, 0.0, 0.0, null, 67.0], "total": 67.0}, {"valores": ["ENVIADO PARA BSB", 267.0, 19.0, 0.0, 76.0, 0.0, 0.0, null, 362.0], "total": 362.0}, {"valores": ["ENVIADO PARA CPN", 186.0, 2.0, 0.0, 149.0, 0.0, 0.0, null, 337.0], "total": 337.0}, {"valores": ["ENVIADO PARA EMPRESTIMO - MG", 31.0, 0.0, 0.0, 0.0, 0.0, 0.0, null, 31.0], "total": 31.0}, {"valores": ["ENVIADO PARA GIG", 156.0, 0.0, 0.0, 6.0, 0.0, 0.0, null, 162.0], "total": 162.0}, {"valores": ["ENVIADO PARA MANUTENÇÃO - SENSOR", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, null, 0.0], "total": 0.0}, {"valores": ["ENVIADO PARA MANUTENÇÃO - SHIELD", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, null, 0.0], "total": 0.0}, {"valores": ["ESTOQUE - BSB", 16.0, 0.0, 0.0, 0.0, 0.0, 0.0, null, 16.0], "total": 16.0}, {"valores": ["ESTOQUE - REC", 19.0, 0.0, 0.0, 1.0, 0.0, 0.0, null, 20.0], "total": 20.0}, {"valores": ["RETORNANDO PARA BASE - TP", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, null, 0.0], "total": 0.0}, {"valores": ["TESTE DE MANUTENÇÃO", 0.0, 0.0, 0.0, 0.0, 0.0, 6.0, null, 6.0], "total": 6.0}];
-const RESUMO = [{"nome": "Recebido pela CF", "porTipo": {"ARES": 794.0, "SHIELD": 2.0, "ARES COM SONDA": 1.0, "SYOS": 1.0, "SENSOR VTC": 0.0, "ELITECH": 0.0}}, {"nome": "Em estoque", "porTipo": {"ARES": 1017.0, "SHIELD": 54.0, "ARES COM SONDA": 37.0, "SYOS": 1543.0, "SENSOR VTC": 103.0, "ELITECH": 173.0}}, {"nome": "Estoque para Calibração", "porTipo": {"ARES": 84.0, "SHIELD": 0.0, "ARES COM SONDA": 0.0, "SYOS": 0.0, "SENSOR VTC": 0.0, "ELITECH": 0.0}}, {"nome": "Estoque para Manutenção", "porTipo": {"ARES": 166.0, "SHIELD": 173.0, "ARES COM SONDA": 46.0, "SYOS": 0.0, "SENSOR VTC": 502.0, "ELITECH": 0.0}}, {"nome": "Emprestimo", "porTipo": {"ARES": 679.0, "SHIELD": 21.0, "ARES COM SONDA": 0.0, "SYOS": 299.0, "SENSOR VTC": 0.0, "ELITECH": 0.0}}, {"nome": "Enviado para Calibração", "porTipo": {"ARES": 415.0, "SHIELD": 0.0, "ARES COM SONDA": 0.0, "SYOS": 0.0, "SENSOR VTC": 0.0, "ELITECH": 0.0}}, {"nome": "Enviado para Manutenção", "porTipo": {"ARES": 425.0, "SHIELD": 0.0, "ARES COM SONDA": 137.0, "SYOS": 0.0, "SENSOR VTC": 0.0, "ELITECH": 0.0}}, {"nome": "Movimentado para CF", "porTipo": {"ARES": 21.0, "SHIELD": 0.0, "ARES COM SONDA": 0.0, "SYOS": 0.0, "SENSOR VTC": 0.0, "ELITECH": 0.0}}];
+const COLUNAS = ["Resumo", "SITUAÇÃO", "ARES", "SHIELD", "ARES COM SONDA", "SYOS", "SENSOR VTC", "ELITECH", "Total"];
+const DADOS = [{"valores": [null, "FORA DE OPERAÇÃO", 4438.0, 548.0, 664.0, 0.0, 142.0, 0.0, 5792.0], "total": 5792.0}, {"valores": [null, "EM DESLOCAMENTO", 2753.0, 7.0, 49.0, 115.0, 4.0, 126.0, 3054.0], "total": 3054.0}, {"valores": ["Em estoque", "EM ESTOQUE", 977.0, 61.0, 4.0, 1543.0, 138.0, 23.0, 2746.0], "total": 2746.0}, {"valores": ["Em estoque", "AGENTE", 867.0, 0.0, 20.0, 0.0, 0.0, 1.0, 888.0], "total": 888.0}, {"valores": ["Recebido pela CF", "ADM - CAMARA FRIA", 849.0, 4.0, 0.0, 1.0, 0.0, 1.0, 855.0], "total": 855.0}, {"valores": ["Recebido pela CF", "RETORNANDO PARA BASE", 501.0, 0.0, 1.0, 2.0, 0.0, 1.0, 505.0], "total": 505.0}, {"valores": ["Enviado para Manutenção", "ENVIADO PARA MANUTENÇÃO - ARES", 424.0, 0.0, 137.0, 0.0, 0.0, 0.0, 561.0], "total": 561.0}, {"valores": ["Enviado para Calibração", "ENVIADO PARA CALIBRAÇÃO", 549.0, 0.0, 0.0, 0.0, 0.0, 0.0, 549.0], "total": 549.0}, {"valores": ["Enviado para Calibração", "FIXOS - VEÍCULOS", 284.0, 0.0, 0.0, 2.0, 0.0, 0.0, 286.0], "total": 286.0}, {"valores": ["Enviado para Calibração", "PACKING - CÂMARA FRIA", 211.0, 0.0, 3.0, 1.0, 0.0, 9.0, 224.0], "total": 224.0}, {"valores": ["Emprestimo", "ENVIADO PARA BSB", 269.0, 17.0, 0.0, 76.0, 0.0, 0.0, 362.0], "total": 362.0}, {"valores": ["Estoque para Manutenção", "EM ESTOQUE PARA MANUTENÇÃO - ARES", 209.0, 0.0, 47.0, 0.0, 0.0, 0.0, 256.0], "total": 256.0}, {"valores": ["Emprestimo", "ENVIADO PARA CPN", 186.0, 2.0, 0.0, 149.0, 0.0, 0.0, 337.0], "total": 337.0}, {"valores": ["Emprestimo", "ENVIADO PARA GIG", 157.0, 0.0, 0.0, 6.0, 0.0, 0.0, 163.0], "total": 163.0}, {"valores": ["Emprestimo", "QUALIFICAÇÃO DE AREA - CF", 124.0, 0.0, 0.0, 0.0, 0.0, 0.0, 124.0], "total": 124.0}, {"valores": ["Estoque para Calibração", "EM ESTOQUE PARA CALIBRAR", 11.0, 0.0, 0.0, 0.0, 0.0, 0.0, 11.0], "total": 11.0}, {"valores": ["Estoque para Calibração", "TESTE QUALIDADE", 37.0, 1.0, 0.0, 2.0, 0.0, 0.0, 40.0], "total": 40.0}, {"valores": ["Estoque para Calibração", "MONITORAMENTO DE AREA - CF", 33.0, 0.0, 0.0, 29.0, 0.0, 0.0, 62.0], "total": 62.0}, {"valores": ["Estoque para Calibração", "MONITORAMENTO DE AREA - CD", 219.0, 0.0, 0.0, 0.0, 0.0, 0.0, 219.0], "total": 219.0}, {"valores": ["Emprestimo", "ENVIADO PARA EMPRESTIMO - MG", 31.0, 0.0, 0.0, 0.0, 0.0, 0.0, 31.0], "total": 31.0}, {"valores": ["Movimentado para CF", "SEPARADO PARA DEMANDA", 18.0, 0.0, 0.0, 0.0, 0.0, 27.0, 45.0], "total": 45.0}, {"valores": ["Emprestimo", "ESTOQUE - REC", 19.0, 0.0, 0.0, 1.0, 0.0, 0.0, 20.0], "total": 20.0}, {"valores": ["Emprestimo", "ESTOQUE - BSB", 16.0, 0.0, 0.0, 0.0, 0.0, 0.0, 16.0], "total": 16.0}, {"valores": ["Emprestimo", "MONITORAMENTO DE AREA - QM", 10.0, 0.0, 0.0, 6.0, 0.0, 0.0, 16.0], "total": 16.0}, {"valores": ["Emprestimo", "QUALIFICAÇÃO DE VEICULOS", 7.0, 0.0, 0.0, 0.0, 0.0, 0.0, 7.0], "total": 7.0}, {"valores": ["Emprestimo", "NÃO LOCALIZADO", 4.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.0], "total": 4.0}, {"valores": ["Emprestimo", "Indefinido", 7.0, 0.0, 0.0, 0.0, 0.0, 1.0, 8.0], "total": 8.0}, {"valores": ["Emprestimo", "EM ROTA - TRASNPORTE", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "total": 0.0}, {"valores": ["Emprestimo", "ESTOQUE - GIG", 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0], "total": 3.0}, {"valores": ["Emprestimo", "MOVIMENTADO PARA BSB", 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], "total": 1.0}, {"valores": ["Emprestimo", "DEVOLUÇÃO DE SHIELD", 0.0, 127.0, 0.0, 0.0, 0.0, 0.0, 127.0], "total": 127.0}, {"valores": ["Estoque para Manutenção", "EM ESTOQUE PARA MANUTENÇÃO - SENSOR", 0.0, 0.0, 0.0, 0.0, 467.0, 0.0, 467.0], "total": 467.0}, {"valores": ["Estoque para Manutenção", "EM ESTOQUE PARA MANUTENÇÃO - SHIELD", 0.0, 173.0, 0.0, 0.0, 0.0, 0.0, 173.0], "total": 173.0}, {"valores": ["Emprestimo", "ENVIADO PARA - REC", 26.0, 0.0, 0.0, 67.0, 0.0, 0.0, 93.0], "total": 93.0}, {"valores": ["Enviado para Manutenção", "ENVIADO PARA MANUTENÇÃO - SENSOR", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "total": 0.0}, {"valores": ["Enviado para Manutenção", "ENVIADO PARA MANUTENÇÃO - SHIELD", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "total": 0.0}, {"valores": ["Enviado para Manutenção", "RETORNANDO PARA BASE - TP", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "total": 0.0}, {"valores": ["Enviado para Manutenção", "TESTE DE MANUTENÇÃO", 0.0, 0.0, 0.0, 0.0, 0.0, 6.0, 6.0], "total": 6.0}];
+const RESUMO = [{"nome": "Em estoque", "porTipo": {"ARES": 1844.0, "SHIELD": 61.0, "ARES COM SONDA": 24.0, "SYOS": 1543.0, "SENSOR VTC": 138.0, "ELITECH": 24.0}}, {"nome": "Recebido pela CF", "porTipo": {"ARES": 1350.0, "SHIELD": 4.0, "ARES COM SONDA": 1.0, "SYOS": 3.0, "SENSOR VTC": 0.0, "ELITECH": 2.0}}, {"nome": "Enviado para Manutenção", "porTipo": {"ARES": 424.0, "SHIELD": 0.0, "ARES COM SONDA": 137.0, "SYOS": 0.0, "SENSOR VTC": 0.0, "ELITECH": 6.0}}, {"nome": "Enviado para Calibração", "porTipo": {"ARES": 1044.0, "SHIELD": 0.0, "ARES COM SONDA": 3.0, "SYOS": 3.0, "SENSOR VTC": 0.0, "ELITECH": 9.0}}, {"nome": "Emprestimo", "porTipo": {"ARES": 860.0, "SHIELD": 146.0, "ARES COM SONDA": 0.0, "SYOS": 305.0, "SENSOR VTC": 0.0, "ELITECH": 1.0}}, {"nome": "Estoque para Manutenção", "porTipo": {"ARES": 209.0, "SHIELD": 173.0, "ARES COM SONDA": 47.0, "SYOS": 0.0, "SENSOR VTC": 467.0, "ELITECH": 0.0}}, {"nome": "Estoque para Calibração", "porTipo": {"ARES": 300.0, "SHIELD": 1.0, "ARES COM SONDA": 0.0, "SYOS": 31.0, "SENSOR VTC": 0.0, "ELITECH": 0.0}}, {"nome": "Movimentado para CF", "porTipo": {"ARES": 18.0, "SHIELD": 0.0, "ARES COM SONDA": 0.0, "SYOS": 0.0, "SENSOR VTC": 0.0, "ELITECH": 27.0}}];
 
 const fmt = valor =>
     Number(valor || 0).toLocaleString("pt-BR");
@@ -369,6 +485,10 @@ const colunasLogger = COLUNAS
     );
 
 const filtrosLogger = document.getElementById("filtrosLogger");
+const filtrosSituacao = document.getElementById("filtrosSituacao");
+const botaoSituacoes = document.getElementById("alternarSituacoes");
+const buscaTabela = document.getElementById("buscaTabela");
+const dropdownSituacao = document.querySelector(".dropdown-situacao");
 const botaoSelecao = document.getElementById("alternarSelecao");
 
 function escaparHtml(valor) {
@@ -380,11 +500,42 @@ function escaparHtml(valor) {
         .replaceAll("'", "&#039;");
 }
 
+const situacoes = [...new Set(DADOS
+    .map(item => String(item.valores[indiceSituacao] ?? "").trim())
+    .filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+
+filtrosSituacao.innerHTML = situacoes.map(situacao =>
+    '<label class="filtro-situacao">' +
+    '<input type="checkbox" value="' + escaparHtml(situacao) + '" checked>' +
+    '<span>' + escaparHtml(situacao) + '</span></label>'
+).join("");
+
+const normalizarSituacao = texto => String(texto)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
+function atualizarBotaoSituacoes() {
+    const caixas = [...filtrosSituacao.querySelectorAll("input[type='checkbox']")];
+    const todasMarcadas = caixas.length > 0 && caixas.every(caixa => caixa.checked);
+    botaoSituacoes.textContent = todasMarcadas ? "Desmarcar todas" : "Selecionar todas";
+}
+
+botaoSituacoes.addEventListener("click", () => {
+    const caixas = [...filtrosSituacao.querySelectorAll("input[type='checkbox']")];
+    const marcarTodas = caixas.some(caixa => !caixa.checked);
+    caixas.forEach(caixa => { caixa.checked = marcarTodas; });
+    atualizarBotaoSituacoes();
+    renderizar();
+});
+
 const cartaoResumo = document.getElementById("cartaoResumo");
 cartaoResumo.hidden = RESUMO.length === 0;
 
 function atualizarResumo(selecionados) {
-    document.getElementById("itensResumo").innerHTML = RESUMO.map(item => {
+    const itensResumo = document.getElementById("itensResumo");
+    itensResumo.innerHTML = RESUMO.map(item => {
         const quantidade = selecionados.reduce((soma, indice) => {
             const tipoLogger = COLUNAS[indice];
             return soma + Number(item.porTipo[tipoLogger] || 0);
@@ -413,7 +564,7 @@ function atualizarTextoBotao() {
     const todasMarcadas =
         caixas.length > 0 && caixas.every(caixa => caixa.checked);
 
-    botaoSelecao.textContent = "Selecionar todos";
+    botaoSelecao.textContent = todasMarcadas ? "Desmarcar todos" : "Selecionar todos";
 }
 
 botaoSelecao.addEventListener("click", () => {
@@ -435,6 +586,7 @@ let colunaOrdenacao = indiceSituacao >= 0 ? indiceSituacao : 0;
 let ordemAscendente = true;
 
 const cabecalho = document.getElementById("cabecalho");
+const tabelaDados = document.getElementById("tabelaDados");
 
 function atualizarEstoque() {
     const selecionados = [
@@ -481,7 +633,6 @@ function renderizar() {
 
     const todosSelecionados =
         selecionados.length === colunasLogger.length;
-
     const indicesVisiveis = [
         indiceSituacao,
         ...selecionados
@@ -514,7 +665,30 @@ function renderizar() {
         });
     });
 
-    const linhas = [...DADOS].sort((a, b) => {
+    const situacoesSelecionadas = new Set(
+        [...filtrosSituacao.querySelectorAll("input:checked")].map(input => input.value)
+    );
+
+    const termoBusca = buscaTabela.value.trim()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLocaleLowerCase("pt-BR");
+
+    const linhas = DADOS.filter(item => {
+        const situacao = String(item.valores[indiceSituacao] ?? "").trim();
+        if (!situacoesSelecionadas.has(situacao)) return false;
+
+
+        if (!termoBusca) return true;
+
+        return item.valores.some(valor =>
+            String(valor ?? "")
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLocaleLowerCase("pt-BR")
+                .includes(termoBusca)
+        );
+    }).sort((a, b) => {
         const x = a.valores[colunaOrdenacao];
         const y = b.valores[colunaOrdenacao];
 
@@ -576,7 +750,18 @@ function renderizar() {
 }
 
 filtrosLogger.addEventListener("change", renderizar);
+filtrosSituacao.addEventListener("change", () => {
+    atualizarBotaoSituacoes();
+    renderizar();
+});
+buscaTabela.addEventListener("input", renderizar);
+document.addEventListener("click", evento => {
+    if (!dropdownSituacao.contains(evento.target)) {
+        dropdownSituacao.removeAttribute("open");
+    }
+});
 
+atualizarBotaoSituacoes();
 renderizar();
 </script>
 </body>
